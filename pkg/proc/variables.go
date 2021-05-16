@@ -108,9 +108,10 @@ type Variable struct {
 	// Base address of the backing byte array for strings
 	// address of the struct backing chan and map variables
 	// address of the function entry point for function variables (0 for nil function pointers)
-	Base      uint64
-	stride    int64
-	fieldType godwarf.Type
+	Base       uint64
+	stride     int64
+	fieldType  godwarf.Type
+	ArrayChild *Variable
 
 	// closureAddr is the closure address for function variables (0 for non-closures)
 	closureAddr uint64
@@ -1209,6 +1210,11 @@ func loadValues(vars []*Variable, cfg LoadConfig) {
 	}
 }
 
+func (v *Variable) Load(cfg LoadConfig) {
+	v.loaded = false
+	v.loadValue(cfg)
+}
+
 // Extracts the value of the variable at the given address.
 func (v *Variable) loadValue(cfg LoadConfig) {
 	v.loadValueInternal(0, cfg)
@@ -1473,6 +1479,7 @@ func (v *Variable) loadSliceInfo(t *godwarf.SliceType) {
 	v.mem = cacheMemory(v.mem, v.Addr, int(t.Size()))
 
 	var err error
+	arrayType := &godwarf.ArrayType{}
 	for _, f := range t.Field {
 		switch f.Name {
 		case sliceArrayFieldName:
@@ -1487,6 +1494,9 @@ func (v *Variable) loadSliceInfo(t *godwarf.SliceType) {
 					return
 				}
 				v.fieldType = ptrType.Type
+				arrayType.Type = v.fieldType
+				// We populate the cap of this later once we've found it.
+				v.ArrayChild = v.newVariable("", v.Base, arrayType, v.mem)
 			}
 		case sliceLenFieldName:
 			lstrAddr, _ := v.toField(f)
@@ -1508,6 +1518,7 @@ func (v *Variable) loadSliceInfo(t *godwarf.SliceType) {
 			return
 		}
 	}
+	arrayType.Count = v.Cap
 
 	v.stride = v.fieldType.Size()
 	if t, ok := v.fieldType.(*godwarf.PtrType); ok {

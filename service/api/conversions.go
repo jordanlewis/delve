@@ -158,13 +158,26 @@ func ConvertVar(v *proc.Variable) *Variable {
 		Cap:      v.Cap,
 		Flags:    VariableFlags(v.Flags),
 		Base:     v.Base,
+		Size:     uint64(v.RealType.Size()),
 
 		LocationExpr: v.LocationExpr.String(),
 		DeclLine:     v.DeclLine,
 	}
+	if v.ArrayChild != nil {
+		r.ArrayChild = ConvertVar(v.ArrayChild)
+	}
 
 	r.Type = PrettyTypeName(v.DwarfType)
 	r.RealType = PrettyTypeName(v.RealType)
+	switch t := v.DwarfType.(type) {
+	case *godwarf.MapType:
+		r.KeyType = PrettyTypeName(t.KeyType)
+		r.ElemType = PrettyTypeName(t.ElemType)
+	case *godwarf.ArrayType:
+		r.ElemType = PrettyTypeName(t.Type)
+	case *godwarf.ChanType:
+		r.ElemType = PrettyTypeName(t.ElemType)
+	}
 
 	if v.Unreadable != nil {
 		r.Unreadable = v.Unreadable.Error()

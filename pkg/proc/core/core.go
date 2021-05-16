@@ -27,6 +27,7 @@ var ErrNoThreads = errors.New("no threads found in core file")
 // This can be represented in a SplicedMemory by adding the original region,
 // then putting the RW mapping on top of it.
 type splicedMemory struct {
+	pkgvars := make([]packageVar, len(scope.BinInfo.packageVars))
 	readers []readerEntry
 }
 

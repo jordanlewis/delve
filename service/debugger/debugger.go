@@ -1455,6 +1455,10 @@ func (d *Debugger) Ancestors(goroutineID, numAncestors, depth int) ([]api.Ancest
 	return r, nil
 }
 
+func (d *Debugger) Target() *proc.Target {
+	return d.target
+}
+
 // ConvertStacktrace converts a slice of proc.Stackframe into a slice of
 // api.Stackframe, loading local variables and arguments of each frame if
 // cfg is not nil.

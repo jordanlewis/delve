@@ -260,6 +260,12 @@ type Variable struct {
 	// Type of the variable after resolving any typedefs
 	RealType string `json:"realType"`
 
+	// ElemType is the Go type of the array, slice, or map element
+	ElemType string `json:"elemType"`
+
+	// KeyType is the Go type of the map key
+	KeyType string `json:"keyType"`
+
 	Flags VariableFlags `json:"flags"`
 
 	Kind reflect.Kind `json:"kind"`
@@ -280,11 +286,19 @@ type Variable struct {
 	// The other length cap applied to this field is related to maximum recursion depth, when the maximum recursion depth is reached this field is left empty, contrary to the previous one this cap also applies to structs (otherwise structs will always have all their member fields returned)
 	Children []Variable `json:"children"`
 
+	// ArrayChild is populated for slices. It contains the backing array for
+	// the slice.
+	ArrayChild *Variable `json:"arraychild"`
+
 	// Base address of arrays, Base address of the backing array for slices (0 for nil slices)
 	// Base address of the backing byte array for strings
 	// address of the struct backing chan and map variables
 	// address of the function entry point for function variables (0 for nil function pointers)
 	Base uint64 `json:"base"`
+
+	// Size is the size of a value of this type. It should be the same thing
+	// that unsafe.Sizeof would return for a value of this type.
+	Size uint64 `json:"size"`
 
 	// Unreadable addresses will have this field set
 	Unreadable string `json:"unreadable"`
